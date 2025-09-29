@@ -12,3 +12,7 @@ int main(){
     if(fork()==0){ strcpy(str,"Hello from child!"); }
     else{ wait(NULL); printf("Parent read: %s\n",str); shmdt(str); shmctl(shmid,IPC_RMID,NULL); }
 }
+
+
+OUTPUT
+Parent read: Hello from child!
