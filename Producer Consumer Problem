@@ -1,79 +1,89 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <unistd.h>
+#include <string.h>
 
-#define BUFFER_SIZE 5
+#define BUFFER_SIZE 3
 
 int buffer[BUFFER_SIZE];
-int in = 0, out = 0;
+int in = 0, out = 0, count = 0;
 
-sem_t empty, full, mutex;
-
-void *producer(void *arg) {
-    int item;
-    for (int i = 1; i <= 10; i++) {
-        item = i; // produce item
-        sem_wait(&empty);
-        sem_wait(&mutex);
-
-        buffer[in] = item;
-        printf("Producer produced: %d\n", item);
-        in = (in + 1) % BUFFER_SIZE;
-
-        sem_post(&mutex);
-        sem_post(&full);
-
-        sleep(1);
+void produce(int item) {
+    if (count == BUFFER_SIZE) {
+        printf("Buffer is FULL! Cannot produce %d\n", item);
+        return;
     }
+    buffer[in] = item;
+    in = (in + 1) % BUFFER_SIZE;
+    count++;
+    printf("Produced: %d | Buffer count = %d\n", item, count);
 }
 
-void *consumer(void *arg) {
-    int item;
-    for (int i = 1; i <= 10; i++) {
-        sem_wait(&full);
-        sem_wait(&mutex);
-
-        item = buffer[out];
-        printf("Consumer consumed: %d\n", item);
-        out = (out + 1) % BUFFER_SIZE;
-
-        sem_post(&mutex);
-        sem_post(&empty);
-
-        sleep(2);
+void consume() {
+    if (count == 0) {
+        printf("Buffer is EMPTY! Cannot consume\n");
+        return;
     }
+    int item = buffer[out];
+    out = (out + 1) % BUFFER_SIZE;
+    count--;
+    printf("Consumed: %d | Buffer count = %d\n", item, count);
 }
 
 int main() {
-    pthread_t prod, cons;
+    char cmd[10];
+    int item, choice = 1;
 
-    sem_init(&empty, 0, BUFFER_SIZE);
-    sem_init(&full, 0, 0);
-    sem_init(&mutex, 0, 1);
+    printf("Producer-Consumer Simulation\n");
+    printf("Commands: produce <num>, consume, exit\n");
 
-    pthread_create(&prod, NULL, producer, NULL);
-    pthread_create(&cons, NULL, consumer, NULL);
+    while (1) {
+        printf("\nEnter command: ");
+        scanf("%s", cmd);
 
-    pthread_join(prod, NULL);
-    pthread_join(cons, NULL);
-
-    sem_destroy(&empty);
-    sem_destroy(&full);
-    sem_destroy(&mutex);
+        if (strcmp(cmd, "produce") == 0) {
+            scanf("%d", &item);
+            produce(item);
+        } 
+        else if (strcmp(cmd, "consume") == 0) {
+            consume();
+        } 
+        else if (strcmp(cmd, "exit") == 0) {
+            break;
+        } 
+        else {
+            printf("Invalid command! Use produce <num>, consume, exit\n");
+        }
+    }
 
     return 0;
 }
 
 OUTPUT
-Producer produced: 1
-Consumer consumed: 1
-Producer produced: 2
-Producer produced: 3
-Consumer consumed: 2
-Producer produced: 4
-Consumer consumed: 3
-Producer produced: 5
-Consumer consumed: 4
-...
+Producer-Consumer Simulation
+Commands: produce <num>, consume, exit
+
+Enter command: produce 1
+Produced: 1 | Buffer count = 1
+
+Enter command: produce 2
+Produced: 2 | Buffer count = 2
+
+Enter command: produce 3
+Produced: 3 | Buffer count = 3
+
+Enter command: produce 4
+Buffer is FULL! Cannot produce 4
+
+Enter command: consume
+Consumed: 1 | Buffer count = 2
+
+Enter command: consume
+Consumed: 2 | Buffer count = 1
+
+Enter command: consume
+Consumed: 3 | Buffer count = 0
+
+Enter command: consume
+Buffer is EMPTY! Cannot consume
+
+Enter command: 
+>>>>>>>>>>>>>
