@@ -1,36 +1,67 @@
 #include <stdio.h>
 
-struct Process { int id, bt, rt, wt, tat, ct; };
+int main() {
+    int n, tq;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
 
-int main(){
-    int n,tq,i,time=0,done; printf("Enter n: "); scanf("%d",&n);
-    struct Process p[n];
-    for(i=0;i<n;i++){ p[i].id=i+1; printf("BT for P%d: ",i+1); scanf("%d",&p[i].bt); p[i].rt=p[i].bt; }
-    printf("Enter Time Quantum: "); scanf("%d",&tq);
+    int bt[n], rbt[n];
+    for (int i = 0; i < n; i++) {
+        printf("Enter burst time of P%d: ", i);
+        scanf("%d", &bt[i]);
+        rbt[i] = bt[i];  // remaining burst time
+    }
 
-    do{
-        done=1;
-        for(i=0;i<n;i++){
-            if(p[i].rt>0){ done=0;
-                if(p[i].rt>tq){ time+=tq; p[i].rt-=tq; }
-                else{ time+=p[i].rt; p[i].rt=0; p[i].ct=time; p[i].tat=p[i].ct; p[i].wt=p[i].tat-p[i].bt; }
+    printf("Enter time quantum: ");
+    scanf("%d", &tq);
+
+    int t = 0;  // current time
+    int done;
+    int tat[n], wt[n];
+    for(int i = 0; i < n; i++) tat[i] = wt[i] = 0;
+
+    while (1) {
+        done = 1;
+        for (int i = 0; i < n; i++) {
+            if (rbt[i] > 0) {
+                done = 0; // there is a process remaining
+                int time_slice = (rbt[i] > tq) ? tq : rbt[i];
+                rbt[i] -= time_slice;
+                t += time_slice;
+                if (rbt[i] == 0) tat[i] = t; // TAT = total time spent in system
             }
         }
-    }while(!done);
+        if (done) break; // all processes are finished
+    }
 
-    printf("\nP\tBT\tCT\tTAT\tWT\n");
-    for(i=0;i<n;i++) printf("P%d\t%d\t%d\t%d\t%d\n",p[i].id,p[i].bt,p[i].ct,p[i].tat,p[i].wt);
+    float total_wt = 0, total_tat = 0;
+    for (int i = 0; i < n; i++) {
+        wt[i] = tat[i] - bt[i]; // WT = TAT - BT
+        total_wt += wt[i];
+        total_tat += tat[i];
+    }
+
+    printf("\nProcess\tBT\tWT\tTAT\n");
+    for (int i = 0; i < n; i++)
+        printf("P%d\t%d\t%d\t%d\n", i, bt[i], wt[i], tat[i]);
+
+    printf("\nAverage WT = %.2f\n", total_wt / n);
+    printf("Average TAT = %.2f\n", total_tat / n);
+
+    return 0;
 }
 
+OUPUT
+Enter number of processes: 3
+Enter burst time of P0: 6
+Enter burst time of P1: 5
+Enter burst time of P2: 4
+Enter time quantum: 2
 
-OUTPUT
-Enter n: 3
-BT for P1: 5
-BT for P2: 4
-BT for P3: 2
-Enter Time Quantum: 2
+Process BT      WT      TAT
+P0      6       8       14
+P1      5       10      15
+P2      4       8       12
 
-P   BT  CT  TAT WT
-P1  5   11  11  6
-P2  4    9   9  5
-P3  2    4   4  2
+Average WT = 8.67
+Average TAT = 13.67
