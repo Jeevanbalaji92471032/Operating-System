@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+
+void* printNumbers(void* arg) {
+    for(int i = 1; i <= 5; i++) {
+        printf("Number: %d\n", i);
+        sleep(1);  // simulate some work
+    }
+    return NULL;
+}
+
+void* printAlphabets(void* arg) {
+    for(char ch = 'A'; ch <= 'E'; ch++) {
+        printf("Alphabet: %c\n", ch);
+        sleep(1);  // simulate some work
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t t1, t2;
+
+    pthread_create(&t1, NULL, printNumbers, NULL);
+    pthread_create(&t2, NULL, printAlphabets, NULL);
+
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+
+    printf("Both threads finished execution.\n");
+    return 0;
+}
+
+OUTPUT:
+Number: 1
+Alphabet: A
+Number: 2
+Alphabet: B
+Number: 3
+Alphabet: C
+Number: 4
+Alphabet: D
+Number: 5
+Alphabet: E
+Both threads finished execution.
+
